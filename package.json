@@ -1,0 +1,37 @@
+{
+  "name": "forza-horizon-5-udp",
+  "description": "",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": " tsc && node build/src/index.js",
+    "lint": "gts lint",
+    "clean": "gts clean",
+    "compile": "tsc",
+    "fix": "gts fix",
+    "prepare": "npm.cmd run compile",
+    "pretest": "npm.cmd run compile",
+    "posttest": "npm.cmd run lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raweceek-temeletry/forza-horizon-5-UDP.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/raweceek-temeletry/forza-horizon-5-UDP/issues"
+  },
+  "homepage": "https://github.com/raweceek-temeletry/forza-horizon-5-UDP#readme",
+  "dependencies": {
+    "binary-parser": "^2.0.1",
+    "byte-data": "^19.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^14.11.2",
+    "gts": "^3.1.0",
+    "typescript": "^4.0.3"
+  }
+}
