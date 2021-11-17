@@ -1,172 +1,118 @@
+import { Address, FH5Packet, Options } from './parser/types';
 import * as dgram from 'dgram';
-import {EventEmitter} from 'events';
-import {AddressInfo} from 'net';
-import {Parser} from 'binary-parser';
+import { EventEmitter } from 'events';
+import { AddressInfo } from 'net';
+import { FH5PacketParser } from './parser/FH5.packet.parser';
 
-const port = 5555;
-const address = 'localhost';
 
-const socket = dgram.createSocket('udp4');
+const DEFAULT_PORT = 5555;
+const FORWARD_ADDRESSES = undefined;
+const ADDRESS = 'localhost';
 
-function start(): void {
-  if (!socket) {
-    return;
+export class forzaHorizon5Client extends EventEmitter {
+
+
+  port: number;
+  forwardAddresses?: Address[];
+  address: string;
+  socket?: dgram.Socket;
+
+  constructor(opts: Options = {}) {
+    super();
+
+    const {
+      port = DEFAULT_PORT,
+      forwardAddresses = FORWARD_ADDRESSES,
+      address = ADDRESS,
+    } = opts;
+
+    this.port = port;
+    this.forwardAddresses = forwardAddresses;
+    this.address = address;
+    this.socket = dgram.createSocket('udp4');
   }
 
-  socket.on('listening', (): void => {
-    if (!socket) {
+  /**
+    * Method to start listening for packets
+    */
+  start(): void {
+    if (!this.socket) {
       return;
     }
 
-    const address: AddressInfo = socket.address();
-    console.log(`UDP Client listening on ${address.address}:${address.port} 🏎`);
-    socket.setBroadcast(true);
-  });
+    this.socket.on('listening', (): void => {
+      if (!this.socket) {
+        return;
+      }
 
-  socket.on('message', (m: Buffer): void => {
-    const parser = new Parser()
+      const address: AddressInfo = this.socket.address();
+      console.log(`UDP Client listening on ${address.address}:${address.port} 🏎`);
+      this.socket.setBroadcast(true);
+    });
 
-      .uint32le('IsRaceOn')
-      .uint32le('TimestampMs')
+    this.socket.on('message', (m: Buffer): void => this.handleMessage(m));
+    this.socket.bind({
+      port: this.port,
+      address: this.address,
+      exclusive: false,
+    });
+  }
 
-      .floatle('EngineMaxRpm')
-      .floatle('EngineIdleRpm')
-      .floatle('CurrentEngineRpm')
+  handleMessage(message: Buffer): void {
+    if (this.forwardAddresses) {
+      // bridge message
+      this.bridgeMessage(message);
+    }
 
-      .floatle('AccelerationX')
-      .floatle('AccelerationY')
-      .floatle('AccelerationZ')
+    const parsedMessage: any = forzaHorizon5Client.parseBufferMessage(
+      message
+    );
 
-      .floatle('VelocityX')
-      .floatle('VelocityY')
-      .floatle('VelocityZ')
+    if (!parsedMessage || !parsedMessage.packetData) {
+      return;
+    }
 
-      .floatle('AngularVelocityX')
-      .floatle('AngularVelocityY')
-      .floatle('AngularVelocityZ')
+    // emit parsed message
+    this.emit('data-out', parsedMessage.packetData.data);
 
-      .floatle('Yaw')
-      .floatle('Pitch')
-      .floatle('Roll')
+    // log parsed message
+    // console.log(parsedMessage.packetData.data);
+  }
 
-      .floatle('NormalizedSuspensionTravelFrontLeft')
-      .floatle('NormalizedSuspensionTravelFrontRight')
-      .floatle('NormalizedSuspensionTravelRearLeft')
-      .floatle('NormalizedSuspensionTravelRearRight')
+  bridgeMessage(message: Buffer): void {
+    if (!this.socket) {
+      throw new Error('Socket is not initialized');
+    }
+    if (!this.forwardAddresses) {
+      throw new Error('No ports to bridge over');
+    }
+    for (const address of this.forwardAddresses) {
+      this.socket.send(message, 0, message.length, address.port, address.ip || '0.0.0.0');
+    }
+  }
 
-      .floatle('TireSlipRatioFrontLeft')
-      .floatle('TireSlipRatioFrontRight')
-      .floatle('TireSlipRatioRearLeft')
-      .floatle('TireSlipRatioRearRight')
+  static parseBufferMessage(
+    message: Buffer): any {
+    const parser: typeof FH5PacketParser = FH5PacketParser
+    if (!parser) {
+      return;
+    }
 
-      .floatle('WheelRotationSpeedFrontLeft')
-      .floatle('WheelRotationSpeedFrontRight')
-      .floatle('WheelRotationSpeedRearLeft')
-      .floatle('WheelRotationSpeedRearRight')
+    const packetData: any = new parser(message);
+    return { packetData };
+  }
 
-      .int32le('WheelOnRumbleStripFrontLeft')
-      .int32le('WheelOnRumbleStripFrontRight')
-      .int32le('WheelOnRumbleStripRearLeft')
-      .int32le('WheelOnRumbleStripRearRight')
+  /**
+   * Method to close the client
+   */
+  stop(): dgram.Socket | undefined {
+    if (!this.socket) {
+      return;
+    }
 
-      .floatle('WheelInPuddleDepthFrontLeft')
-      .floatle('WheelInPuddleDepthFrontRight')
-      .floatle('WheelInPuddleDepthRearLeft')
-      .floatle('WheelInPuddleDepthRearRight')
-
-      .floatle('SurfaceRumbleFrontLeft')
-      .floatle('SurfaceRumbleFrontRight')
-      .floatle('SurfaceRumbleRearLeft')
-      .floatle('SurfaceRumbleRearRight')
-
-      .floatle('TireSlipAngleFrontLeft')
-      .floatle('TireSlipAngleFrontRight')
-      .floatle('TireSlipAngleRearLeft')
-      .floatle('TireSlipAngleRearRight')
-
-      .floatle('TireCombinedSlipFrontLeft')
-      .floatle('TireCombinedSlipFrontRight')
-      .floatle('TireCombinedSlipRearLeft')
-      .floatle('TireCombinedSlipRearRight')
-
-      .floatle('SuspensionTravelMetersFrontLeft')
-      .floatle('SuspensionTravelMetersFrontRight')
-      .floatle('SuspensionTravelMetersRearLeft')
-      .floatle('SuspensionTravelMetersRearRight')
-
-      .int32le('CarOrdinal')
-      .int32le('CarClass')
-      .int32le('CarPerformanceIndex')
-      .int32le('DrivetrainType')
-      .int32le('NumCylinders')
-
-      .int32le('HorizonPlaceholder1')
-      .uint32le('HorizonPlaceholder2')
-      .uint32le('HorizonPlaceholder3')
-
-      .floatle('PositionX')
-      .floatle('PositionY')
-      .floatle('PositionZ')
-
-      .floatle('Speed')
-      .floatle('Power')
-      .floatle('Torque')
-
-      .floatle('TireTempFrontLeft')
-      .floatle('TireTempFrontRight')
-      .floatle('TireTempRearLeft')
-      .floatle('TireTempRearRight')
-
-      .floatle('Boost')
-      .floatle('Fuel')
-      .floatle('DistanceTraveled')
-      .floatle('BestLap')
-      .floatle('LastLap')
-      .floatle('CurrentLap')
-      .floatle('CurrentRaceTime')
-
-      .uint16le('LapNumber')
-      .uint8('RacePosition')
-      .uint8('Accel')
-      .uint8('Brake')
-      .uint8('Clutch')
-      .uint8('HandBrake')
-      .uint8('Gear')
-      .int8('Steer')
-      .int8('NormalizedDrivingLine')
-      .int8('NormalizedAIBrakeDifference')
-
-      .parse(m);
-
-    console.clear();
-    console.log('IsRaceOn', parser.IsRaceOn);
-    console.log('TimestampMs', parser.TimestampMs);
-    console.log('NumCylinders', parser.NumCylinders);
-
-    console.log('CurrentEngineRpm', parser.CurrentEngineRpm);
-
-    console.log('HorizonPlaceholder', parser.HorizonPlaceholder1);
-    console.log('HorizonPlaceholder', parser.HorizonPlaceholder2);
-    console.log('HorizonPlaceholder', parser.HorizonPlaceholder3);
-
-    console.log('speed', parser.Speed * 3.6);
-    console.log('racePosition', parser.RacePosition);
-    console.log('Gear', parser.Gear);
-    console.log('LapNumber', parser.LapNumber);
-    
-    
-  });
-
-  socket.bind({
-    port: port,
-    address: address,
-    exclusive: false,
-  });
+    return this.socket.close((): void => {
+      console.log('UDP Client closed 🏁');
+      this.socket = undefined;
+    });
+  }
 }
-
-socket.on('listening', () => {
-  const address = socket.address() as AddressInfo;
-  console.log(`UDP Server listening on ${address.address}:${address.port}`);
-});
-
-start();
