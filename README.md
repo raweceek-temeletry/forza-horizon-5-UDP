@@ -3,8 +3,8 @@
 This is a TypeScript UDP telemetry parser and client for the Forza Horizon 5 game.
 
 
+![](forza.gif)
 
-<iframe src="//coub.com/embed/2qazum?muted=false&autostart=false&originalSize=false&startWithHD=true" allowfullscreen frameborder="0" width="480" height="270" allow="autoplay"></iframe><script async src="//c-cdn.coub.com/embed-runner.js"></script>
 
 ## usage
 
