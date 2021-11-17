@@ -115,9 +115,7 @@ CarPerformanceIndex:int32
 DrivetrainType:int32 
 NumCylinders:int32 
 
-HorizonPlaceholder1:int32 
-HorizonPlaceholder2:uint32 
-HorizonPlaceholder3:uint32 
+HorizonPlaceholder: unknown // 12 bytes
 
 PositionX:float 
 PositionY:float 
