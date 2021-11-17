@@ -1,6 +1,6 @@
 {
   "name": "forza-horizon-5-udp",
-  "description": "",
+  "description": "UDP telemetry parser and client fot Forza Horizon 5 game",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -9,17 +9,14 @@
     "lint": "gts lint",
     "clean": "gts clean",
     "compile": "tsc",
-    "fix": "gts fix",
-    "prepare": "npm.cmd run compile",
-    "pretest": "npm.cmd run compile",
-    "posttest": "npm.cmd run lint"
+    "fix": "gts fix"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/raweceek-temeletry/forza-horizon-5-UDP.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["FH5", "Forza Horizon 5", "UDP", "telemetry", "parser", "client"],
+  "author": "PrimeGoose",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/raweceek-temeletry/forza-horizon-5-UDP/issues"
