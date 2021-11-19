@@ -3,7 +3,7 @@
 This is a TypeScript UDP telemetry parser and client for the Forza Horizon 5 game.
 
 
-![](logo.gif)
+![](forza.gif)
 
 
 ## usage

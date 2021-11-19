@@ -11,7 +11,7 @@ export interface Options {
 }
 
 
-export interface FH5Packet {
+export interface Data_Out {
 
     IsRaceOn: number;
     TimestampMs: number;
