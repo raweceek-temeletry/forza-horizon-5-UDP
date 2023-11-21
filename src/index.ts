@@ -1,4 +1,4 @@
-import { Address, Data_Out, Options } from './parser/types';
+import { Address, Options } from './parser/types';
 import * as dgram from 'dgram';
 import { EventEmitter } from 'events';
 import { AddressInfo } from 'net';
